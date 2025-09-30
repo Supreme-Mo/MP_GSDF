@@ -700,7 +700,40 @@ class GaussianModel:
                 self._anchor_feat = optimizable_tensors["anchor_feat"]
                 self._offset = optimizable_tensors["offset"]
                 self._opacity = optimizable_tensors["opacity"]
-                
+    # 增加的初始化多平面方法
+    # def init_MutiPlane(self,init_xyzs,init_features):
+
+    #     self._features_dc = nn.Parameter(torch.cat((self._features_dc,init_features.unsqueeze(1)),dim=0).contiguous().requires_grad_(True))
+    #     self._features_rest  = nn.Parameter(torch.cat((self._features_rest,torch.zeros((init_features.shape[0],((self.max_sh_degree + 1) ** 2)-1,init_features.shape[1]),device="cuda")),dim=0).contiguous().requires_grad_(True))
+    #     self._xyz = nn.Parameter(torch.cat((self._xyz,init_xyzs),dim=0).contiguous().requires_grad_(True))
+    #     dist2 = torch.clamp_min(distCUDA2(self._xyz), 0.0000001)
+    #     scales = torch.log(torch.sqrt(dist2))[..., None].repeat(1, 3)
+    #     rots = torch.zeros((self._xyz.shape[0], 4), device="cuda")
+    #     rots[:, 0] = 1
+    #     self._rotation = nn.Parameter(rots.requires_grad_(True))
+    #     self._scaling = nn.Parameter(scales.requires_grad_(True))
+    #     opacities = inverse_sigmoid(0.1 * torch.ones((self._xyz.shape[0], 1), dtype=torch.float, device="cuda"))
+    #     self._opacity = nn.Parameter(opacities.requires_grad_(True))
+    #     self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
+    def add_MultiPlane_anchor(self, new_xyzs, new_features=None): # 修改
+        """
+        为多平面初始化增加 anchor 点
+        new_xyzs: 新增点 (N,3) Tensor
+        new_features: 新增特征 (N,F) Tensor，可为 None
+        """
+        # 增加 anchor 坐标
+        if hasattr(self, "_anchor"):
+            self._anchor = torch.cat((self._anchor, new_xyzs), dim=0).contiguous()
+            if new_features is not None:
+                if hasattr(self, "_anchor_feat"):
+                    self._anchor_feat = torch.cat((self._anchor_feat, new_features), dim=0).contiguous()
+                else:
+                    self._anchor_feat = new_features.clone()
+        else:
+            self._anchor = new_xyzs.clone()
+            self._anchor_feat = new_features.clone() if new_features is not None else None
+
+            
     def lift_sdf_sample_points_to_anchors(self, add_contents):
         ## 
         # count_new_anchors = 0

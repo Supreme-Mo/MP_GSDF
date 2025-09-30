@@ -1,7 +1,7 @@
 exp_dir=./exp
-config=configs/tnt/barn.yaml
+config=configs/tnt/truc.yaml
 gpu=0
-tag=release
+tag=tnt_release
 
 python launch.py \
     --exp_dir ${exp_dir} \

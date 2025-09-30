@@ -1,0 +1,17 @@
+einops
+wandb
+gaussian_splatting/submodules/diff-gaussian-rasterization
+gaussian_splatting/submodules/simple-knn
+pytorch-lightning==1.9.5
+omegaconf==2.2.3
+nerfacc==0.3.3
+matplotlib
+opencv-python
+imageio
+imageio-ffmpeg
+scipy
+einops
+PyMCubes==0.1.4
+pyransac3d
+torch_efficient_distloss
+tensorboard

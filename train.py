@@ -52,7 +52,7 @@ try:
 except ImportError:
     TENSORBOARD_FOUND = False
     print("not found tf board")
-
+from scene.external import get_add_point,MutiPlane_anchor_init , get_depth_mask, get_vector, error_map, gaussian_decomp # 修改 导入scene/external.py中的函数
 def saveRuntimeCode(dst: str) -> None:
     additionalIgnorePatterns = ['.git', '.gitignore']
     ignorePatterns = set()
@@ -84,10 +84,34 @@ def training(dataset, opt, pipe, dataset_name, testing_iterations, saving_iterat
         (model_params, first_iter) = torch.load(checkpoint)
         gaussians.restore(model_params, opt)
 
+#修改
+    viewpoint_stack = scene.getTrainCameras().copy()
+    resample_num = 2
+    for num in range(resample_num):
+        idx = randint(0, len(viewpoint_stack) - 1)
+        resample_cam = viewpoint_stack[idx]
+
+        # 如果已经有 anchor
+        if hasattr(gaussians, "_anchor"):
+            xyz = gaussians._anchor
+        else:
+            xyz = torch.zeros((0, 3), device="cuda")
+         # 多平面生成 anchor
+        init_xyz, init_features = MutiPlane_anchor_init(
+            monodepth=resample_cam.depth,
+            xyz=xyz,
+            cam=resample_cam,
+            plane_num=16,
+            sample_size=opt.sample_win_size,
+            muti_mode="neighbor",
+            itera_num=num
+        )
+        gaussians.add_MultiPlane_anchor(new_xyzs=init_xyz, new_features=init_features)
+
     iter_start = torch.cuda.Event(enable_timing = True)
     iter_end = torch.cuda.Event(enable_timing = True)
 
-    viewpoint_stack = None
+    #viewpoint_stack = None
     ema_loss_for_log = 0.0
     progress_bar = tqdm(range(first_iter, opt.iterations), desc="Training progress")
     first_iter += 1

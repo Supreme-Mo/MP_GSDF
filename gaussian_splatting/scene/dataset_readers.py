@@ -37,7 +37,7 @@ class CameraInfo(NamedTuple):
     image_name: str
     width: int
     height: int
-
+    depth: np.array #增加深度
 class SceneInfo(NamedTuple):
     point_cloud: BasicPointCloud
     train_cameras: list
@@ -109,8 +109,11 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
             image = None
         else:
             image = Image.open(image_path)
-           
-        cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        #增加深度
+        depth_folder = os.path.join(os.path.dirname(images_folder), "DPT_depth") #往上退一层
+        depth_path=os.path.join(depth_folder,f"{image_name}.npy")
+        depth=np.load(depth_path)
+        cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,depth=depth,
                               image_path=image_path, image_name=image_name, width=width, height=height)
         cam_infos.append(cam_info)
     sys.stdout.write('\n')
@@ -206,7 +209,7 @@ def normalize_scene(pcd,cam_infos_unsorted,inv_trans, scale):
         R_norm = W2C_norm[:3, :3].transpose()
         t_norm = W2C_norm[:3, 3]
         cam_info = CameraInfo(uid=cam[0], R=R_norm, T=t_norm, FovY=cam[3], FovX=cam[4], image=cam[5],
-                              image_path=cam[6], image_name=cam[7], width=cam[8], height=cam[9])
+                              image_path=cam[6], image_name=cam[7], width=cam[8], height=cam[9],depth=cam[10])
         # print(cam[7])
         norm_cam_infos_unsorted.append(cam_info)
         
@@ -252,6 +255,7 @@ def readColmapSceneInfo(path, images, eval, lod, llffhold=8,scale_input=1.0,cent
  
     
     reading_dir = "images" if images == None else images
+    #增加深度后从这里接受返回的cam_infors
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir))
     #Normalize with given parameters or automatically
     if scale_input!=0.0 or center_input!=[0,0,0]:
