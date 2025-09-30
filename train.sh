@@ -1,5 +1,5 @@
 exp_dir=./exp
-config=configs/tnt/truc.yaml
+config=configs/tnt/truck.yaml
 gpu=0
 tag=tnt_release
 
